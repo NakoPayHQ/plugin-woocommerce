@@ -3,7 +3,7 @@
  * Plugin Name: NakoPay for WooCommerce
  * Plugin URI:  https://nakopay.com/integrations
  * Description: Accept BTC and crypto in WooCommerce. One flat fee, non-custodial, wallet-to-wallet.
- * Version:     0.1.0
+ * Version: 0.1.0
  * Author:      NakoPay
  * Author URI:  https://nakopay.com
  * License:     MIT
