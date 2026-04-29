@@ -1,0 +1,46 @@
+name: Release plugin-woocommerce (wp.org + GitHub)
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No internal URLs
+        run: bash ./scripts/check-no-internal-urls.sh ./
+      - name: Stage plugin into nakopay-woocommerce/
+        run: |
+          # Stage the plugin into a fixed-name folder so the resulting zip
+          # extracts as wp-content/plugins/nakopay-woocommerce/ (the wp.org
+          # convention) and so the build works the same in the monorepo
+          # and in the per-plugin mirror after bootstrap-mirrors.sh sed
+          # rewrites `./` -> `./`.
+          mkdir -p build/nakopay-woocommerce
+          rsync -a \
+            --exclude='.git' --exclude='node_modules' --exclude='vendor' \
+            --exclude='build' --exclude='.github' --exclude='scripts' \
+            ./ build/nakopay-woocommerce/
+      - name: Deploy to WordPress.org
+        if: ${{ env.SVN_PASSWORD != '' }}
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_USERNAME: ${{ secrets.WP_ORG_USER }}
+          SVN_PASSWORD: ${{ secrets.WP_ORG_PASSWORD }}
+          SLUG: nakopay-woocommerce
+          BUILD_DIR: build/nakopay-woocommerce
+      - name: Build zip
+        run: |
+          cd build
+          zip -r ../nakopay-woocommerce.zip nakopay-woocommerce
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: nakopay-woocommerce.zip
+          generate_release_notes: true
+          name: WooCommerce ${{ github.ref_name }}
